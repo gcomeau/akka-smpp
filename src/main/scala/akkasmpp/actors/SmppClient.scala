@@ -108,6 +108,7 @@ class SmppClient(config: SmppClientConfig, receiver: ClientReceive, pduLogger: P
   context.setReceiveTimeout(config.enquireLinkTimer * 2)
 
   log.info(s"Connecting to server at " + config.bindTo.toString)
+  println(s"GC- Connecting to server at " + config.bindTo.toString)
   context.watch(connection)
 
   def receive = connecting
@@ -115,6 +116,7 @@ class SmppClient(config: SmppClientConfig, receiver: ClientReceive, pduLogger: P
   def connecting: Actor.Receive = {
     case conn @ Smpp.OutgoingConnection(remote, local) =>
       log.info(s"Connection established to server at $remote")
+      println(s"Connection established to server at $remote")
       context.parent ! conn
       config.autoBind.foreach { self.tell(_, context.parent) } // send bind command to yourself if it's configured for autobind
       context.become(bind)
@@ -137,6 +139,7 @@ class SmppClient(config: SmppClientConfig, receiver: ClientReceive, pduLogger: P
       val cmd = bindFactory(sequenceNumberGen.next, COctetString.ascii(systemId), COctetString.ascii(password),
         COctetString.ascii(systemType), 0x34, addrTon, addrNpi, COctetString.empty)
       log.info(s"Making bind request $cmd")
+      println(s"Making bind request $cmd")
       connection ! cmd
       // XXX: receive timeout?
       context.become(binding(sender()))
@@ -148,6 +151,7 @@ class SmppClient(config: SmppClientConfig, receiver: ClientReceive, pduLogger: P
       requester ! p
       if (p.commandStatus == CommandStatus.ESME_ROK) {
         log.info(s"Bound: $p")
+        println(s"Bound: $p")
         // start timers
         config.enquireLinkTimer match {
           case f: FiniteDuration =>
@@ -158,6 +162,7 @@ class SmppClient(config: SmppClientConfig, receiver: ClientReceive, pduLogger: P
         }
         context.become(bound)
       } else {
+        println(s"NOT Bound: $p")
         disconnect(new BindFailed(p.commandStatus))
       }
   }
@@ -202,6 +207,7 @@ class SmppClient(config: SmppClientConfig, receiver: ClientReceive, pduLogger: P
    * @param reason The reason is important for the supervisor strategy to decide about restarting.
    */
   def disconnect(reason: Throwable) = {
+    println(s"???Disconnecting $reason")
     connection ! akka.actor.Status.Failure(reason)
     throw reason
   }
@@ -210,9 +216,15 @@ class SmppClient(config: SmppClientConfig, receiver: ClientReceive, pduLogger: P
    * Common receive handlers for all the states where a TCP connection exists
    */
   def connectedCommon: Receive = {
-    case cc: ConnectionClosed => throw new PeerClosed()
-    case ReceiveTimeout => disconnect(new PeerTimedOut(config.enquireLinkTimer * 2))
-    case akka.actor.Status.Failure(ex) => disconnect(ex)
+    case cc: ConnectionClosed => 
+      println(s"connectedCommon: $cc")
+             throw new PeerClosed()
+    case ReceiveTimeout => 
+      println(s"connectedCommon: ReceiveTimeout")
+      disconnect(new PeerTimedOut(config.enquireLinkTimer * 2))
+    case akka.actor.Status.Failure(ex) => 
+      println(s"connectedCommon: stat failure")
+    disconnect(ex)
   }
 
 }
