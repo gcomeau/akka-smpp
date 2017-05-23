@@ -176,7 +176,7 @@ class SmppClient(config: SmppClientConfig, receiver: ClientReceive, pduLogger: P
       window = window.updated(pdu.sequenceNumber, sender())
 
     case pdu: SmscResponse if window.get(pdu.sequenceNumber).isDefined =>
-      log.debug(s"Incoming SubmitSmResp $pdu")
+      log.debug(s"Incoming SmscResponse $pdu")
       window(pdu.sequenceNumber) ! pdu
       window = window - pdu.sequenceNumber
     case pdu: EnquireLinkResp =>
@@ -223,7 +223,7 @@ class SmppClient(config: SmppClientConfig, receiver: ClientReceive, pduLogger: P
       println(s"connectedCommon: ReceiveTimeout")
       disconnect(new PeerTimedOut(config.enquireLinkTimer * 2))
     case akka.actor.Status.Failure(ex) => 
-      println(s"connectedCommon: stat failure")
+      println(s"connectedCommon: stat failure $ex")
     disconnect(ex)
   }
 
