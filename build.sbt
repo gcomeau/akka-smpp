@@ -13,7 +13,7 @@ val akkaV = "2.5.0"
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaV,
   "com.typesafe.akka" %% "akka-slf4j" % akkaV,
-  "com.cloudhopper" % "ch-commons-charset" % "3.0.2",
+  "com.cloudhopper" % "ch-commons-charset" % "3.0.3-SNAPSHOT",
   "com.typesafe.akka" %% "akka-testkit" % akkaV % "test",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
   "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
@@ -22,4 +22,6 @@ libraryDependencies ++= Seq(
 javacOptions in Compile ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-Xlint:deprecation")
 
 licenses += ("Apache-2.0" -> url("https://opensource.org/licenses/Apache-2.0"))
+
+resolvers += Resolver.mavenLocal
 
